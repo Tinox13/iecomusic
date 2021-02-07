@@ -1,30 +1,36 @@
-const { CommandoClient } = require(`discord.js-commando`);
-const path = require(`path`);
+const Discord = require('discord.js');
+const ytdl = require('ytdl-core');
+const bot = new Discord.Client();
+const PREFIX = "!"
 
-const client = new CommandoClient({
-    commandPrefix: `-`,
-    owner: "505166303842140186",
-    invite: "https://discord.gg/aYG9MVpG"
+bot.on('ready', function () {
+    console.log("Félicitations votre bot Discord a été correctement initialisé !")
 });
 
-client.registry
-    .registerDefaultTypes()
-    .registerDefaultGroups()
-    .registerDefaultCommands()
-    .registerGroup("music", "Music")
-    .registerCommandsIn(path.join(__dirname, "commands"));
+bot.on("message", message => {
+    if (message.content.startsWith(PREFIX + "play")) {
+        if (message.member.voice.channel) {
+            message.member.voice.channel.join().then(connection => {
+                let args = message.content.split(" ");
 
-client.server = {
-    queue:[],
-    currentVideo: {title: "", url: "" },
-    dispatcher: null
-};
+                let dispatcher = connection.play(ytdl(args[1], { quality: "highestaudio" }));
 
+                dispatcher.on("finish", () => {
+                    dispatcher.destroy();
+                    connection.disconnect();
+                });
 
-client.once("ready", () => {
-    console.log(`Bot bien initialisé ${client.user.tag} -  (${client.user.id})`);
-})
+                dispatcher.on("error", err => {
+                    console.log("erreur de dispatcher : " + err);
+                });
+            }).catch(err => {
+                message.reply("Erreur lors de la connection : " + err);
+            });
+        }
+        else {
+            message.reply("Vous n'etez pas connecté en vocal!");
+        }
+    }
+});   
 
-client.on("error", (error) => console.error(error));
-
-client.login(`ODA3NzAxMTcxODc5MDE4NTc3.YB70VQ.bwwoChhxQGZkRD2Sb_ffrfcZjro`);
+bot.login(`ODA3NzAxMTcxODc5MDE4NTc3.YB70VQ.fTDEra8mB6bzUVrEl_YhcFx1Iqc`);
